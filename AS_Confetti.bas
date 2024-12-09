@@ -8,6 +8,11 @@ Version=8.45
 Updates
 V1.00
 	-Release
+V1.01
+	-Add new particle "HeartParticle"
+		-Default: True
+	-Add new particle "SnowflakeParticle"
+		-Default: False
 #End If
 
 #DesignerProperty: Key: BackgroundColor, DisplayName: Background Color, FieldType: Color, DefaultValue: 0x00FFFFFF, Description: Default is transparent
@@ -17,8 +22,10 @@ V1.00
 #DesignerProperty: Key: CircleParticle, DisplayName: CircleParticle, FieldType: Boolean, DefaultValue: True
 #DesignerProperty: Key: RectangleParticle, DisplayName: RectangleParticle, FieldType: Boolean, DefaultValue: True
 #DesignerProperty: Key: StarParticle, DisplayName: StarParticle, FieldType: Boolean, DefaultValue: True
-#DesignerProperty: Key: TriangleParticle, DisplayName: TriangleParticle, FieldType: Boolean, DefaultValue: False
 #DesignerProperty: Key: HexagonParticle, DisplayName: HexagonParticle, FieldType: Boolean, DefaultValue: True
+#DesignerProperty: Key: HeartParticle, DisplayName: HeartParticle, FieldType: Boolean, DefaultValue: True
+#DesignerProperty: Key: SnowflakeParticle, DisplayName: SnowflakeParticle, FieldType: Boolean, DefaultValue: False
+#DesignerProperty: Key: TriangleParticle, DisplayName: TriangleParticle, FieldType: Boolean, DefaultValue: False
 #DesignerProperty: Key: LightningParticle, DisplayName: LightningParticle, FieldType: Boolean, DefaultValue: False, Description: A zigzag shape can have a dynamic effect and brings movement into play
 
 Sub Class_Globals
@@ -46,6 +53,8 @@ Sub Class_Globals
 	Private m_TriangleParticle As Boolean
 	Private m_HexagonParticle As Boolean
 	Private m_LightningParticle As Boolean
+	Private m_HeartParticle As Boolean
+	Private m_SnowflakeParticle As Boolean
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
@@ -97,16 +106,20 @@ Private Sub IniProps(Props As Map)
 	m_TriangleParticle = Props.GetDefault("TriangleParticle",False)
 	m_HexagonParticle = Props.GetDefault("HexagonParticle",True)
 	m_LightningParticle = Props.GetDefault("LightningParticle",False)
+	m_HeartParticle = Props.GetDefault("HeartParticle",True)
+	m_SnowflakeParticle = Props.GetDefault("SnowflakeParticle",False)
 End Sub
 
 Private Sub CreateParticleTypeList
 	lstParticleTypes.Clear
 	If m_CircleParticle Then lstParticleTypes.Add("Circle")
-	If m_RectangleParticle Then lstParticleTypes.Add("Rectangle") ' Neues Rechteck hinzufügen
-	If m_StarParticle Then lstParticleTypes.Add("Star") ' Neuer Stern hinzufügen
+	If m_RectangleParticle Then lstParticleTypes.Add("Rectangle")
+	If m_StarParticle Then lstParticleTypes.Add("Star")
 	If m_TriangleParticle Then lstParticleTypes.Add("Triangle")
 	If m_HexagonParticle Then lstParticleTypes.Add("Hexagon")
 	If m_LightningParticle Then lstParticleTypes.Add("Lightning")
+	If m_HeartParticle Then lstParticleTypes.Add("Heart")
+	If m_SnowflakeParticle Then lstParticleTypes.Add("Snowflake")
 End Sub
 
 Public Sub Base_Resize (Width As Double, Height As Double)
@@ -148,6 +161,10 @@ Private Sub UpdateItem(Item As AS_Confetti_Item) As AS_Confetti_Item
 			Item.ParticleType = "Hexagon"
 		Case "Lightning"
 			Item.ParticleType = "Lightning"
+		Case "Heart"
+			Item.ParticleType = "Heart"
+		Case "Snowflake"
+			Item.ParticleType = "Snowflake"
 	End Select
 	
 	Return Item
@@ -183,7 +200,6 @@ Private Sub tmrMain_Tick
 					xRect.Initialize(Item.X, Item.Y,Item.X + Item.Size,Item.Y + Item.Size)
 					xCanvas.DrawRect(xRect, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)), True, 2dip)
 				Case "Star"
-					'Stern mit benutzerdefinierter Logik zeichnen
 					DrawStar(Item.X, Item.Y, Item.Size, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)))
 				Case "Triangle"
 					DrawTriangle(Item.X, Item.Y, Item.Size, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)))
@@ -191,8 +207,11 @@ Private Sub tmrMain_Tick
 					DrawHexagon(Item.X, Item.Y, Item.Size, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)))
 				Case "Lightning"
 					DrawLightning(Item.X, Item.Y, Item.Size, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)))
+				Case "Heart"
+					xCanvas.DrawText(Chr(0xE87D),Item.X, Item.Y,xui.CreateMaterialIcons(Item.Size*2),xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)),"CENTER")
+				Case "Snowflake"
+					xCanvas.DrawText(Chr(0xEB3B),Item.X, Item.Y,xui.CreateMaterialIcons(Item.Size*2),xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)),"CENTER")
 			End Select
-
 
 			' Wenn das Partikel den Bildschirm verlässt, neu positionieren
 			If Item.Y <= mBase.Height Then
@@ -381,6 +400,22 @@ End Sub
 
 Public Sub getLightningParticle() As Boolean
 	Return m_LightningParticle
+End Sub
+
+Public Sub getHeartParticle As Boolean
+	Return m_HeartParticle
+End Sub
+
+Public Sub setHeartParticle(HeartParticle As Boolean)
+	m_HeartParticle = HeartParticle
+End Sub
+
+Public Sub getSnowflakeParticle As Boolean
+	Return m_SnowflakeParticle
+End Sub
+
+Public Sub setSnowflakeParticle(SnowflakeParticle As Boolean)
+	m_SnowflakeParticle = SnowflakeParticle
 End Sub
 
 'The alpha value is determined randomly
