@@ -13,6 +13,15 @@ V1.01
 		-Default: True
 	-Add new particle "SnowflakeParticle"
 		-Default: False
+V1.02 (nicht veröffentlicht)
+	-New CreateViewPerCode
+	-New ConfettiExplosion - Creates a confetti explosion from the point (StartX, StartY) with random direction and speed for each particle
+	-New SideBurst - Blasts confetti from the left or right side horizontally across the view
+	-New PulseBurst - Creates a series of mini explosions from the center
+	-New "TrapezoidParticle"
+		-Default: False
+	-New Event "Finished" - Is triggered when all particles are on the ground or the animation has been stopped
+	-Change GenerateConfetti renamed to DropConfetti
 #End If
 
 #DesignerProperty: Key: BackgroundColor, DisplayName: Background Color, FieldType: Color, DefaultValue: 0x00FFFFFF, Description: Default is transparent
@@ -26,7 +35,10 @@ V1.01
 #DesignerProperty: Key: HeartParticle, DisplayName: HeartParticle, FieldType: Boolean, DefaultValue: True
 #DesignerProperty: Key: SnowflakeParticle, DisplayName: SnowflakeParticle, FieldType: Boolean, DefaultValue: False
 #DesignerProperty: Key: TriangleParticle, DisplayName: TriangleParticle, FieldType: Boolean, DefaultValue: False
+#DesignerProperty: Key: TrapezoidParticle, DisplayName: TrapezoidParticle, FieldType: Boolean, DefaultValue: False
 #DesignerProperty: Key: LightningParticle, DisplayName: LightningParticle, FieldType: Boolean, DefaultValue: False, Description: A zigzag shape can have a dynamic effect and brings movement into play
+
+#Event: Finished
 
 Sub Class_Globals
 	Type AS_Confetti_Item (X As Float, Y As Float, VelocityX As Float, VelocityY As Float, Size As Float, Color As Int,Alpha As Int,ParticleType As String)
@@ -55,6 +67,7 @@ Sub Class_Globals
 	Private m_LightningParticle As Boolean
 	Private m_HeartParticle As Boolean
 	Private m_SnowflakeParticle As Boolean
+	Private m_TrapezoidParticle As Boolean
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
@@ -65,12 +78,23 @@ Public Sub Initialize (Callback As Object, EventName As String)
 	lstColors.Initialize
 End Sub
 
+Public Sub CreateViewPerCode(Parent As B4XView,Left As Float,Top As Float,Width As Float,Height As Float)
+	
+	Dim xpnl_ViewBase As B4XView = xui.CreatePanel("")
+	Parent.AddView(xpnl_ViewBase,Left,Top,Max(1dip,Width),Max(1dip,Height))
+	
+	DesignerCreateView(xpnl_ViewBase,CreateLabel(""),CreateMap())
+	
+End Sub
+
 'Base type must be Object
 Public Sub DesignerCreateView (Base As Object, Lbl As Label, Props As Map)
 	mBase = Base
 	Tag = mBase.Tag
 	mBase.Tag = Me
-
+	#If B4I
+	mBase.As(Panel).UserInteractionEnabled = False
+	#End If
 	IniProps(Props)
 
 	mBase.Color = m_BackgroundColor
@@ -108,6 +132,7 @@ Private Sub IniProps(Props As Map)
 	m_LightningParticle = Props.GetDefault("LightningParticle",False)
 	m_HeartParticle = Props.GetDefault("HeartParticle",True)
 	m_SnowflakeParticle = Props.GetDefault("SnowflakeParticle",False)
+	m_TrapezoidParticle = Props.GetDefault("TrapezoidParticle",False)
 End Sub
 
 Private Sub CreateParticleTypeList
@@ -120,6 +145,7 @@ Private Sub CreateParticleTypeList
 	If m_LightningParticle Then lstParticleTypes.Add("Lightning")
 	If m_HeartParticle Then lstParticleTypes.Add("Heart")
 	If m_SnowflakeParticle Then lstParticleTypes.Add("Snowflake")
+	If m_TrapezoidParticle Then lstParticleTypes.Add("Trapezoid")
 End Sub
 
 Public Sub Base_Resize (Width As Double, Height As Double)
@@ -127,7 +153,8 @@ Public Sub Base_Resize (Width As Double, Height As Double)
 	xCanvas.Resize(Width, Height)
 End Sub
 
-Public Sub GenerateConfetti
+'Generates a confetti drop from random positions above the view, simulating falling particles
+Public Sub DropConfetti
 	Dim lstConfetti As List
 	lstConfetti.Initialize
 	For i = 1 To m_ParticleCount
@@ -138,6 +165,133 @@ Public Sub GenerateConfetti
 	lstConfettiSets.Add(lstConfetti)
 	If Not(tmrMain.Enabled) Then tmrMain.Enabled = True ' Timer aktivieren, falls deaktiviert
 End Sub
+
+'Creates a confetti explosion from the point (StartX, StartY) with random direction and speed for each particle
+Public Sub ConfettiExplosion(StartX As Float, StartY As Float)
+	Dim lstConfetti As List
+	lstConfetti.Initialize
+	For i = 1 To m_ParticleCount
+		Dim Item As AS_Confetti_Item
+		Item.Initialize
+		Item.X = StartX
+		Item.Y = StartY
+
+		' Zufälliger Winkel von 0 bis 360 Grad
+		Dim angle As Float = Rnd(0, 360)
+		' Zufällige Stärke (Geschwindigkeit)
+		Dim speed As Float = Rnd(4, 10)
+        
+		' Zerlegen in X und Y
+		Item.VelocityX = CosD(angle) * speed
+		Item.VelocityY = SinD(angle) * speed * -1 ' Y-Achse nach oben negativ
+
+		Item.Size = Rnd(5, 15)
+		Item.Color = lstColors.Get(Rnd(0, lstColors.Size))
+		Item.Alpha = IIf(m_SemiTransparentShapes, Rnd(30, 256), 255)
+		Item.ParticleType = lstParticleTypes.Get(Rnd(0, lstParticleTypes.Size))
+
+		lstConfetti.Add(Item)
+	Next
+	lstConfettiSets.Add(lstConfetti)
+	If Not(tmrMain.Enabled) Then tmrMain.Enabled = True
+End Sub
+
+'Blasts confetti from the left or right side horizontally across the view
+Public Sub SideBurst(FromLeft As Boolean)
+	Dim lstConfetti As List
+	lstConfetti.Initialize
+	For i = 1 To m_ParticleCount
+		Dim Item As AS_Confetti_Item
+		Item.Initialize
+		Item.X = IIf(FromLeft, 0, mBase.Width)
+		Item.Y = Rnd(0, mBase.Height / 2)
+		Item.VelocityX = IIf(FromLeft, Rnd(2, 6), Rnd(-6, -2))
+		Item.VelocityY = Rnd(-2, 2)
+		Item.Size = Rnd(5, 15)
+		Item.Color = lstColors.Get(Rnd(0, lstColors.Size))
+		Item.Alpha = IIf(m_SemiTransparentShapes, Rnd(30, 256), 255)
+		Item.ParticleType = lstParticleTypes.Get(Rnd(0, lstParticleTypes.Size))
+		lstConfetti.Add(Item)
+	Next
+	lstConfettiSets.Add(lstConfetti)
+	If Not(tmrMain.Enabled) Then tmrMain.Enabled = True
+End Sub
+
+'Creates a series of mini explosions from the center
+Public Sub PulseBurst(CenterX As Float, CenterY As Float, PulseCount As Int, IntervalMs As Int)
+	For i = 0 To PulseCount - 1
+		Sleep(i * IntervalMs)
+		ConfettiExplosion(CenterX, CenterY)
+	Next
+End Sub
+
+'Simulates a swirling vortex of confetti from the center
+'Todo: Wenn custom zeichen
+'Public Sub VortexSwirl(CenterX As Float, CenterY As Float)
+'	Dim lstConfetti As List
+'	lstConfetti.Initialize
+'	For i = 1 To m_ParticleCount
+'		Dim Item As AS_Confetti_Item
+'		Item.Initialize
+'		Item.X = CenterX
+'		Item.Y = CenterY
+'
+'		Dim angle As Float = Rnd(0, 360)
+'		Dim speed As Float = Rnd(1, 4)
+'		Dim swirl As Float = Rnd(1, 3)
+'
+'		Item.VelocityX = CosD(angle + swirl) * speed
+'		Item.VelocityY = SinD(angle + swirl) * speed * -1
+'
+'		Item.Size = Rnd(5, 12)
+'		Item.Color = lstColors.Get(Rnd(0, lstColors.Size))
+'		Item.Alpha = Rnd(80, 200)
+'		Item.ParticleType = lstParticleTypes.Get(Rnd(0, lstParticleTypes.Size))
+'		lstConfetti.Add(Item)
+'	Next
+'	lstConfettiSets.Add(lstConfetti)
+'	If Not(tmrMain.Enabled) Then tmrMain.Enabled = True
+'End Sub
+
+'Particles fly from the edges toward a central target
+'Public Sub ConfettiTargetHit(TargetX As Float, TargetY As Float)
+'	Dim lstConfetti As List
+'	lstConfetti.Initialize
+'	For i = 1 To m_ParticleCount
+'		Dim Item As AS_Confetti_Item
+'		Item.Initialize
+'		Dim side As Int = Rnd(0, 4) ' 0 = top, 1 = right, 2 = bottom, 3 = left
+'		Select side
+'			Case 0 ' top
+'				Item.X = Rnd(0, mBase.Width)
+'				Item.Y = -20
+'			Case 1 ' right
+'				Item.X = mBase.Width + 20
+'				Item.Y = Rnd(0, mBase.Height)
+'			Case 2 ' bottom
+'				Item.X = Rnd(0, mBase.Width)
+'				Item.Y = mBase.Height + 20
+'			Case 3 ' left
+'				Item.X = -20
+'				Item.Y = Rnd(0, mBase.Height)
+'		End Select
+'
+'		Dim dx As Float = TargetX - Item.X
+'		Dim dy As Float = TargetY - Item.Y
+'		Dim dist As Float = Sqrt(Power(dx, 2) + Power(dy, 2))
+'		Dim speed As Float = Rnd(3, 6)
+'		Item.VelocityX = dx / dist * speed
+'		Item.VelocityY = dy / dist * speed
+'
+'		Item.Size = Rnd(5, 15)
+'		Item.Color = lstColors.Get(Rnd(0, lstColors.Size))
+'		Item.Alpha = 255
+'		Item.ParticleType = lstParticleTypes.Get(Rnd(0, lstParticleTypes.Size))
+'		lstConfetti.Add(Item)
+'	Next
+'	lstConfettiSets.Add(lstConfetti)
+'	If Not(tmrMain.Enabled) Then tmrMain.Enabled = True
+'End Sub
 
 Private Sub UpdateItem(Item As AS_Confetti_Item) As AS_Confetti_Item
 	Item.X = Rnd(0, mBase.Width)
@@ -165,6 +319,8 @@ Private Sub UpdateItem(Item As AS_Confetti_Item) As AS_Confetti_Item
 			Item.ParticleType = "Heart"
 		Case "Snowflake"
 			Item.ParticleType = "Snowflake"
+		Case "Trapezoid"
+			Item.ParticleType = "Trapezoid"
 	End Select
 	
 	Return Item
@@ -200,7 +356,7 @@ Private Sub tmrMain_Tick
 					xRect.Initialize(Item.X, Item.Y,Item.X + Item.Size,Item.Y + Item.Size)
 					xCanvas.DrawRect(xRect, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)), True, 2dip)
 				Case "Star"
-					DrawStar(Item.X, Item.Y, Item.Size, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)))
+					DrawStar(Item.X, Item.Y, Item.Size, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)))				
 				Case "Triangle"
 					DrawTriangle(Item.X, Item.Y, Item.Size, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)))
 				Case "Hexagon"
@@ -211,6 +367,8 @@ Private Sub tmrMain_Tick
 					xCanvas.DrawText(Chr(0xE87D),Item.X, Item.Y,xui.CreateMaterialIcons(Item.Size*2),xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)),"CENTER")
 				Case "Snowflake"
 					xCanvas.DrawText(Chr(0xEB3B),Item.X, Item.Y,xui.CreateMaterialIcons(Item.Size*2),xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)),"CENTER")
+				Case "Trapezoid"
+					DrawTrapezoid(Item.X, Item.Y, Item.Size, xui.Color_ARGB(Item.Alpha,Color(1),Color(2),Color(3)))
 			End Select
 
 			' Wenn das Partikel den Bildschirm verlässt, neu positionieren
@@ -335,11 +493,34 @@ Private Sub DrawStar(X As Float, Y As Float, Size As Float, Color As Int)
 	xCanvas.DrawPath(Path, Color, True, 2dip)
 End Sub
 
+Private Sub DrawTrapezoid(X As Float, Y As Float, Size As Float, Color As Int)
+	Dim Path As B4XPath
+	Dim TopWidth As Float = Size * 0.6
+	Dim BottomWidth As Float = Size
+	Dim Height As Float = Size
+
+	Dim HalfTop As Float = TopWidth / 2
+	Dim HalfBottom As Float = BottomWidth / 2
+
+	' Obere Kante (kleiner)
+	Path.Initialize(X - HalfTop, Y - Height / 2)
+	Path.LineTo(X + HalfTop, Y - Height / 2)
+	
+	' Schräge Seiten nach unten
+	Path.LineTo(X + HalfBottom, Y + Height / 2)
+	Path.LineTo(X - HalfBottom, Y + Height / 2)
+
+	' Zurück zur oberen linken Ecke
+	Path.LineTo(X - HalfTop, Y - Height / 2)
+
+	xCanvas.DrawPath(Path, Color, True, 2dip)
+End Sub
 
 
 
 Private Sub StopEffect
 	tmrMain.Enabled = False
+	Finished
 End Sub
 
 
@@ -418,6 +599,14 @@ Public Sub setSnowflakeParticle(SnowflakeParticle As Boolean)
 	m_SnowflakeParticle = SnowflakeParticle
 End Sub
 
+Public Sub getTrapezoidParticle As Boolean
+	Return m_TrapezoidParticle
+End Sub
+
+Public Sub setTrapezoidParticle(TrapezoidParticle As Boolean)
+	m_TrapezoidParticle = TrapezoidParticle
+End Sub
+
 'The alpha value is determined randomly
 Public Sub setSemiTransparentShapes(SemiTransparentShapes As Boolean)
 	m_SemiTransparentShapes = SemiTransparentShapes
@@ -474,6 +663,22 @@ Private Sub GetARGB(Color As Int) As Int()
 	res(2) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff00), 8)
 	res(3) = Bit.And(Color, 0xff)
 	Return res
+End Sub
+
+Private Sub CreateLabel(EventName As String) As B4XView
+	Dim lbl As Label
+	lbl.Initialize(EventName)
+	Return lbl
+End Sub
+
+#End Region
+
+#Region Events
+
+Private Sub Finished
+	If xui.SubExists(mCallBack, mEventName & "_Finished",0) Then
+		CallSub(mCallBack, mEventName & "_Finished")
+	End If
 End Sub
 
 #End Region

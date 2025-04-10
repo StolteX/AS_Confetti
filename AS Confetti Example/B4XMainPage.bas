@@ -31,10 +31,41 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 End Sub
 
 #If B4J
-Private Sub xlbl_Start_MouseClicked (EventData As MouseEvent)
+Private Sub xlbl_DropConfetti_MouseClicked (EventData As MouseEvent)
 #Else
-Private Sub xlbl_Start_Click
+Private Sub xlbl_DropConfetti_Click
 #End If
 	
-	AS_Confetti1.GenerateConfetti
+	AS_Confetti1.DropConfetti
+	
+End Sub
+
+#If B4J
+Private Sub xlbl_ConfettiExplosion_MouseClicked (EventData As MouseEvent)
+#Else
+Private Sub xlbl_ConfettiExplosion_Click
+#End If
+	
+	AS_Confetti1.ConfettiExplosion(Root.Width/2,Root.Height/2)
+	
+End Sub
+
+#If B4J
+Private Sub xlbl_SideBurst_MouseClicked (EventData As MouseEvent)
+#Else
+Private Sub xlbl_SideBurst_Click
+#End If
+	
+	AS_Confetti1.SideBurst(False)
+	
+End Sub
+
+#If B4J
+Private Sub xlbl_PulseBurst_MouseClicked (EventData As MouseEvent)
+#Else
+Private Sub xlbl_PulseBurst_Click
+#End If
+	
+	AS_Confetti1.PulseBurst(Root.Width/2,Root.Height/2,5,250)
+	
 End Sub
