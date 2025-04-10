@@ -522,6 +522,7 @@ End Sub
 Private Sub StopEffect
 	tmrMain.Enabled = False
 	xCanvas.ClearRect(xCanvas.TargetRect)
+	xCanvas.Invalidate
 	Finished
 End Sub
 
