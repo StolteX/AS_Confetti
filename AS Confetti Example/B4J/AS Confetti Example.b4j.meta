@@ -7,6 +7,6 @@ ModuleBreakpoints2=
 ModuleClosedNodes0=1,4
 ModuleClosedNodes1=
 ModuleClosedNodes2=
-NavigationStack=AS_Confetti,DrawStar,439,0,Visual Designer,frm_main.bjl,-100,6,AS_Confetti,tmrMain_Tick,352,3,AS_Confetti,UpdateItem,296,3,AS_Confetti,Class_Globals,54,0,AS_Confetti,IniProps,123,0,AS_Confetti,CreateParticleTypeList,133,0,AS_Confetti,setTrapezoidParticle,594,0,AS_Confetti,setSnowflakeParticle,587,0,AS_Confetti,getTrapezoidParticle,591,0
+NavigationStack=AS_Confetti,Class_Globals,37,0,AS_Confetti,DesignerCreateView,96,0,Visual Designer,frm_main.bjl,-100,6,B4XMainPage,xlbl_DropConfetti_MouseClicked,32,0,B4XMainPage,xlbl_ConfettiExplosion_MouseClicked,42,0,B4XMainPage,xlbl_SideBurst_MouseClicked,52,0,AS_Confetti,tmrMain_Tick,326,5,AS_Confetti,Base_Resize,150,0,B4XMainPage,xlbl_PulseBurst_MouseClicked,66,0,B4XMainPage,AS_Confetti1_Finished,69,3
 SelectedBuild=0
 VisibleModules=2,1

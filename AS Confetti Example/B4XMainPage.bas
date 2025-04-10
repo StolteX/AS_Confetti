@@ -69,3 +69,8 @@ Private Sub xlbl_PulseBurst_Click
 	AS_Confetti1.PulseBurst(Root.Width/2,Root.Height/2,5,250)
 	
 End Sub
+
+'Is triggered when all particles are on the ground or the animation has been stopped
+Private Sub AS_Confetti1_Finished
+	Log("Finished")
+End Sub

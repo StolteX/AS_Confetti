@@ -13,7 +13,8 @@ V1.01
 		-Default: True
 	-Add new particle "SnowflakeParticle"
 		-Default: False
-V1.02 (nicht veröffentlicht)
+V1.02
+	-BugFixes and Improvements
 	-New CreateViewPerCode
 	-New ConfettiExplosion - Creates a confetti explosion from the point (StartX, StartY) with random direction and speed for each particle
 	-New SideBurst - Blasts confetti from the left or right side horizontally across the view
@@ -520,6 +521,7 @@ End Sub
 
 Private Sub StopEffect
 	tmrMain.Enabled = False
+	xCanvas.ClearRect(xCanvas.TargetRect)
 	Finished
 End Sub
 
